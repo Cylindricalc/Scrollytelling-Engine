@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiet Morning</title>
+<script src="scrollytelling.js"></script>
+</head>
+<body>
+<script>
+/* ============================================================================
+   QUIET MORNING — a slow, minimalist story about the first hour of the day.
+   Warm and still on purpose: sway is off, jolt/flash/punch/desaturate are
+   all disabled, and pacing is slower than default. See README.md for what
+   every CONFIG field does.
+   ============================================================================ */
+const CONFIG = {
+  theme: {
+    background: '#f4ece1',
+    ink:        '#3a2f28',
+    accent:     '#b8763f',
+    dim:        'rgba(58,47,40,0.45)',
+    fontFamily: "Georgia, 'Iowan Old Style', 'Palatino Linotype', serif",
+  },
+
+  scene: {
+    perspective:          1400,   // flatter than default — a gentle, undramatic depth
+    panelWidth:           600,
+    depthPerPanel:        1500,
+    scrollPxPerDepthUnit: 1.15,   // slower than default — nothing here is in a hurry
+    fadeWindowPercent:    'auto',
+    sectionGapVh:         18,
+    crossfadeFactor:      0.6,
+  },
+
+  // No rocking-boat sway at all — this story should feel completely still.
+  sway: { enabled: false, amplitudeDeg: 0, amplitudePx: 0, durationSec: 8 },
+
+  // All of the sudden/jarring effects are switched off; nothing in this
+  // story should ever snap, flash, or shake. slowmo is harmless to leave on
+  // (it only slows an already-disabled sway) but the others are true no-ops
+  // at the config level, not just unused — a section could still name them
+  // in `effects` without anything happening.
+  jolt:       { enabled: false, durationSec: 0.8, intensity: 1 },
+  flash:      { enabled: false, color: '#ffffff', durationSec: 0.6 },
+  punch:      { enabled: false, durationSec: 0.5, scaleAmount: 0.14 },
+  desaturate: { enabled: false, durationSec: 1.1 },
+  slowmo:     { enabled: true,  durationSec: 2.5, rate: 0.2 },
+
+  layers: [
+    { type: 'backdrop',
+      gradient: 'linear-gradient(180deg, #fbe3c4 0%, #f6d9b8 35%, #f0ceac 65%, #e9c39c 100%)',
+      driftSec: 90, grain: false },
+    // No rain, no foreground props — an open, empty sky is the point.
+  ],
+
+  ui: { progressBar: true, chapterNav: true, fullscreenToggle: false, scrollHint: true, textDrift: false },
+
+  panels: [
+    { behavior: 'fade', type: 'title', text: 'QUIET MORNING', chapter: true, z: 220 },
+    { behavior: 'fade', type: 'small', text: 'Six small moments, before the day asks anything of you.' },
+
+    { behavior: 'fade', type: 'title', text: 'WAKING', chapter: true },
+    {
+      behavior: 'scroll',
+      sections: [
+        { type: 'body',  text: 'No alarm. Just the room going gradually lighter.' },
+        { type: 'small', text: 'The kind of waking up that takes its time.' },
+        { type: 'body',  text: 'You lie there a minute longer than you need to.' },
+      ],
+    },
+
+    { behavior: 'split', type: 'title', left: 'ASLEEP', right: 'AWAKE' },
+    { behavior: 'split', type: 'small', left: 'The gap between them,', right: 'this morning, is very soft.' },
+
+    { behavior: 'zoom', type: 'title', text: 'STILL' },
+    { behavior: 'fade', type: 'small', text: 'Everything in the room is exactly where you left it.' },
+
+    { behavior: 'typewriter', type: 'body', text: 'The kettle starts, slow and low, somewhere behind you.' },
+
+    { behavior: 'fade', type: 'title', text: 'LIGHT', chapter: true },
+    {
+      behavior: 'scroll',
+      sections: [
+        { type: 'body',  text: 'Sun comes in low through the kitchen window.' },
+        { type: 'small', text: 'Dust catching it, unhurried, mid-air.' },
+        { type: 'body',  text: 'You pour the tea before it has finished steeping. It is fine.' },
+      ],
+    },
+
+    { behavior: 'fade', type: 'quote', text: 'Not every morning needs to become something. Some of them can just be morning.' },
+
+    {
+      behavior: 'fade',
+      type: 'small',
+      image: 'https://picsum.photos/id/431/1200/700',
+      imageAlt: 'A warm, softly lit cup of tea on a wooden table near a window',
+      imageCaption: 'Ten minutes, no phone, one window. That is the whole plan.',
+    },
+
+    { behavior: 'pin', type: 'title', text: 'ENOUGH' },
+    { behavior: 'pin', type: 'small', text: 'A short word. It still says a lot.' },
+
+    { behavior: 'fade', type: 'title', text: 'THE DAY CAN WAIT A LITTLE LONGER' },
+  ],
+};
+
+Scrollytelling.init(CONFIG);
+</script>
+</body>
+</html>

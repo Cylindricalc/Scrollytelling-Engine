@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scrollytelling Engine — Feature Showcase</title>
+<script src="scrollytelling.js"></script>
+</head>
+<body>
+<script>
+/* ============================================================================
+   CONFIG — the only part most stories need to touch. Everything the engine
+   needs to run lives in scrollytelling-engine.js (imported above); see
+   README.md for what every field here does and how to extend the engine.
+   ============================================================================ */
+const CONFIG = {
+  theme: {
+    background: '#0b0d10',
+    ink:        '#eae6dd',
+    accent:     '#d9663f',
+    dim:        'rgba(234,230,221,0.35)',
+    fontFamily: "Georgia, 'Times New Roman', serif",
+  },
+
+  scene: {
+    perspective:          900,    // px — lower = more extreme depth "fisheye"
+    panelWidth:           640,    // px
+    depthPerPanel:        1400,   // px — default spacing between auto-placed panels (multiplied by
+                                  // section count for 'scroll' panels — see engine notes below)
+    scrollPxPerDepthUnit: 0.9,    // real scroll px per 1px of virtual depth — the main "reading time" dial
+    fadeWindowPercent:    'auto', // 'auto' sizes each panel's visible window to its own slot so
+                                  // neighbors don't crowd it out; pass a number (e.g. 15) to force
+                                  // a fixed window globally, or set per-panel below to override just one.
+    sectionGapVh:         16,     // vertical gap between stacked sections inside a 'scroll' panel
+    crossfadeFactor:      0.55,   // 'auto' window sizing: fraction (>0.5 = some overlap) of a panel's
+                                  // OWN depth slot used on each side of its peak. Ties window width
+                                  // directly to how much content that panel actually holds.
+  },
+
+  sway: { enabled: true, amplitudeDeg: 1.4, amplitudePx: 10, durationSec: 8.5 },
+
+  jolt: { enabled: true, durationSec: 0.8, intensity: 1 }, // durationSec = real wall-clock playback time, always the
+                                                            // same speed no matter how fast/slow you're scrolling —
+                                                            // see PANEL_EFFECTS.jolt + effectTriggers below
+
+  flash: { enabled: true, color: '#ffffff', durationSec: 0.6 }, // a full-viewport light hit — see PANEL_EFFECTS.flash
+
+  punch: { enabled: true, durationSec: 0.5, scaleAmount: 0.14 }, // a fast scale-up snap — see PANEL_EFFECTS.punch
+
+  desaturate: { enabled: true, durationSec: 1.1 }, // grayscale/contrast pulse — see PANEL_EFFECTS.desaturate
+
+  slowmo: { enabled: true, durationSec: 2.5, rate: 0.2 }, // temporarily slows ambient sway — see PANEL_EFFECTS.slowmo
+
+  // ---- LAYERS — array of environment effects, in any order, any quantity ----
+  layers: [
+    { type: 'backdrop', gradient: 'linear-gradient(180deg, #1c2530 0%, #222b33 38%, #171b1f 55%, #0c0f12 100%)', driftSec: 60 },
+    { type: 'rain', enabled: true, windAngle: 0.18, vignette: true, // set enabled: false to fully skip it
+      background: { count: 90, lenMin: 6,  lenMax: 14, speedMin: 4, speedMax: 7,  opacity: 0.18, width: 1   },
+      foreground: { count: 45, lenMin: 16, lenMax: 30, speedMin: 9, speedMax: 14, opacity: 0.32, width: 1.6 } },
+    { type: 'fgProp', side: 'left',  color: '#050607',
+      clipPath: 'polygon(0% 100%, 0% 35%, 30% 15%, 55% 30%, 40% 55%, 60% 70%, 35% 100%)' },
+    { type: 'fgProp', side: 'right', color: '#050607',
+      clipPath: 'polygon(100% 100%, 100% 20%, 70% 10%, 50% 35%, 68% 55%, 45% 75%, 65% 100%)' },
+  ],
+
+  ui: { progressBar: true, chapterNav: true, fullscreenToggle: true, scrollHint: true, textDrift: true },
+
+  // ---- PANELS ----
+  // Each entry is one depth "slot" the camera flies through. The RECOMMENDED
+  // pattern is `behavior: 'scroll'` with a `sections` array — that's how you
+  // put a lot of content (a whole chapter) into one slot; sections stack
+  // vertically and you scroll past each in turn, like normal page text.
+  //
+  //   type:      'title' | 'body' | 'small' | 'quote'   — typography only
+  //   behavior:  'fade' (default) | 'zoom' | 'scroll' | 'pin' | 'split' |
+  //              'typewriter'  — see PANEL_BEHAVIORS below
+  //   sections:  (for 'scroll' panels) array of { text, type, effects, chapter, image, imageAlt, imageCaption, imageWidth }
+  //              — each section can independently request its own effects
+  //              and/or become its own chapter-nav entry
+  //   text:      shorthand for a single-section panel (fade OR scroll with
+  //              just one section) — equivalent to `sections: [{ text, ... }]`
+  //   left/right: for 'split' panels only, instead of `text` — the two
+  //              pieces that slide in from opposite edges
+  //   image:     url — works on any panel/section, alone or paired with
+  //              `text`. Also takes `imageAlt`, `imageCaption` (small text
+  //              under the image), `imageWidth` (CSS width, e.g. '70%').
+  //   effects:   e.g. ['jolt'] — applies when the panel starts becoming
+  //              visible; for per-SECTION effects, put `effects` on the
+  //              section instead (applies when that section enters frame)
+  //   z / fadeWindowPercent / chapter: same overrides as before, at either
+  //              the panel or section level
+  panels: [
+    // Shallow explicit z so this appears almost immediately — see the
+    // engine note above windowFor() for why the very first panel should
+    // sit close to the camera rather than using the default auto-spacing.
+    { behavior: 'fade', type: 'title', text: 'SCROLLYTELLING ENGINE', chapter: true, z: 200 },
+    { behavior: 'fade', type: 'small', text: 'A showcase of every panel type, behavior, and effect this engine ships with.' },
+
+    // ---- PANEL TYPES ----
+    { behavior: 'fade', type: 'title', text: 'PANEL TYPES', chapter: true },
+    { behavior: 'fade', type: 'body', text: 'This is the default "body" type — the standard size for normal reading text.' },
+    { behavior: 'fade', type: 'small', text: 'This is the "small" type — for asides, captions, and quieter beats.' },
+    { behavior: 'fade', type: 'quote', text: 'This is the "quote" type — a pull-quote treatment for one striking line.' },
+    {
+      behavior: 'fade',
+      type: 'small',
+      image: 'https://picsum.photos/id/1018/1200/700',
+      imageAlt: 'Mountain lake landscape',
+      imageCaption: 'The `image` field works on any panel or scroll section — this is a real photo, not a placeholder box.',
+    },
+
+    // ---- BEHAVIORS ----
+    { behavior: 'fade', type: 'title', text: 'BEHAVIORS', chapter: true },
+    { behavior: 'fade', type: 'body', text: 'This panel uses the "fade" behavior — it blurs in, holds, and fades back out in place.' },
+    { behavior: 'zoom', type: 'title', text: 'ZOOM' },
+    { behavior: 'fade', type: 'small', text: 'Text grows in from a distance, sharpens into focus, then keeps growing and blurs past the camera.' },
+    { behavior: 'pin', type: 'title', text: 'PIN' },
+    { behavior: 'pin', type: 'small', text: 'No fade, no crawl — this just appears and disappears at a hard cut.' },
+    { behavior: 'split', type: 'title', left: 'BEFORE', right: 'AFTER' },
+    { behavior: 'split', type: 'small', left: 'Two pieces of text,', right: 'sliding in from opposite edges.' },
+    { behavior: 'typewriter', type: 'body', text: 'This is the "typewriter" behavior — characters appear one at a time as you scroll.' },
+    {
+      behavior: 'scroll',
+      sections: [
+        { type: 'body',  text: 'This is the "scroll" behavior — sections stack vertically inside one panel,' },
+        { type: 'small', text: '...and crawl upward through frame as you scroll, the way this sentence just did.' },
+        { type: 'body',  text: 'A scroll panel can hold as many sections as you like, each with its own type, image, or effects.' },
+      ],
+    },
+
+    // ---- EFFECTS ----
+    { behavior: 'fade', type: 'title', text: 'EFFECTS', chapter: true },
+    // Standalone panel effect — proves effects work on any behavior, not
+    // just inside a scroll panel's sections.
+    { behavior: 'fade', type: 'small', text: 'Effects are one-shot: they fire once, in real time, the moment you scroll past their trigger point.', effects: ['jolt'] },
+    {
+      behavior: 'scroll',
+      sections: [
+        { type: 'body', text: 'Jolt — one sudden, hard hit.', effects: ['jolt'] },
+        { type: 'body', text: 'Flash — a bright pulse of light.', effects: ['flash'] },
+        { type: 'body', text: 'They can combine for something heavier.', effects: ['jolt', 'flash'] },
+        { type: 'body', text: 'Punch — a fast scale-up snap.', effects: ['punch'] },
+        { type: 'body', text: 'Desaturate — a grayscale shock pulse.', effects: ['desaturate'] },
+        { type: 'body', text: 'Slowmo — the ambient sway slows for a moment.', effects: ['slowmo'] },
+      ],
+    },
+
+    // ---- LAYERS ----
+    { behavior: 'fade', type: 'title', text: 'LAYERS', chapter: true },
+    { behavior: 'fade', type: 'small', text: "Backdrop, rain, and foreground props render continuously behind and in front of every panel — they aren't panels themselves, just the environment you've been scrolling through this whole time." },
+
+    { behavior: 'fade', type: 'title', text: "THAT'S THE WHOLE ENGINE" },
+  ],
+};
+
+Scrollytelling.init(CONFIG);
+</script>
+</body>
+</html>

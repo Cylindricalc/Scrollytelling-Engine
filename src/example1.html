@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Drift</title>
+<script src="scrollytelling.js"></script>
+</head>
+<body>
+<script>
+/* ============================================================================
+   NEON DRIFT — a cyberpunk night-drive story.
+   Fast, glitchy pacing; heavy on jolt/flash/desaturate; tight perspective for
+   a claustrophobic, speed-blurred feel. See README.md for what every CONFIG
+   field does.
+   ============================================================================ */
+const CONFIG = {
+  theme: {
+    background: '#05040a',
+    ink:        '#eafaff',
+    accent:     '#ff2e93',
+    dim:        'rgba(150,240,255,0.4)',
+    fontFamily: "'Consolas', 'SF Mono', 'Courier New', monospace",
+  },
+
+  scene: {
+    perspective:          520,    // tighter than default — steeper, more claustrophobic depth
+    panelWidth:           680,
+    depthPerPanel:        1300,
+    scrollPxPerDepthUnit: 0.75,   // a bit brisker than default — this story wants momentum
+    fadeWindowPercent:    'auto',
+    sectionGapVh:         14,
+    crossfadeFactor:      0.55,
+  },
+
+  sway: { enabled: true, amplitudeDeg: 0.8, amplitudePx: 14, durationSec: 3.2 }, // fast, jittery — a car, not a boat
+
+  jolt:       { enabled: true, durationSec: 0.5, intensity: 1.3 },  // sharper and quicker than default
+  flash:      { enabled: true, color: '#5be9ff', durationSec: 0.45 }, // cyan flash, not white — reads as neon, not lightning
+  punch:      { enabled: true, durationSec: 0.35, scaleAmount: 0.1 },
+  desaturate: { enabled: true, durationSec: 1.4 },
+  slowmo:     { enabled: true, durationSec: 2.2, rate: 0.15 },
+
+  layers: [
+    { type: 'backdrop',
+      gradient: 'linear-gradient(180deg, #120a24 0%, #1d0f3a 30%, #2a0f3f 55%, #0a0614 100%)',
+      driftSec: 40 },
+    { type: 'rain', enabled: true, windAngle: 0.05, vignette: true,
+      background: { count: 70, lenMin: 10, lenMax: 22, speedMin: 10, speedMax: 16, opacity: 0.14, width: 1   },
+      foreground: { count: 35, lenMin: 24, lenMax: 40, speedMin: 18, speedMax: 26, opacity: 0.28, width: 1.4 } },
+    { type: 'fgProp', side: 'left',  color: '#08050f',
+      clipPath: 'polygon(0% 100%, 0% 10%, 22% 5%, 26% 40%, 12% 45%, 30% 60%, 18% 100%)',
+      swayDeg: 0.5, swayDurationSec: 4 },
+    { type: 'fgProp', side: 'right', color: '#08050f',
+      clipPath: 'polygon(100% 100%, 100% 15%, 76% 8%, 70% 35%, 85% 48%, 68% 65%, 82% 100%)',
+      swayDeg: 0.5, swayDurationSec: 4 },
+  ],
+
+  ui: { progressBar: true, chapterNav: true, fullscreenToggle: true, scrollHint: true, textDrift: true },
+
+  panels: [
+    { behavior: 'fade', type: 'title', text: 'NEON DRIFT', chapter: true, z: 180 },
+    { behavior: 'fade', type: 'small', text: 'The city runs on light. You are just passing through it.' },
+
+    { behavior: 'fade', type: 'title', text: 'IGNITION', chapter: true },
+    {
+      behavior: 'scroll',
+      sections: [
+        { type: 'body',  text: 'Engine hums awake. The dash lights up in violet and cyan.' },
+        { type: 'small', text: 'Rain on the windshield, already streaked with reflected signs.' },
+        { type: 'body',  text: 'Somewhere ahead, the grid is waiting.', effects: ['flash'] },
+      ],
+    },
+
+    { behavior: 'zoom', type: 'title', text: 'ACCELERATE' },
+    { behavior: 'fade', type: 'small', text: 'The street blurs into a single, bleeding line of color.' },
+
+    { behavior: 'pin', type: 'title', text: '140 KM/H' },
+    { behavior: 'pin', type: 'small', text: 'A number, then gone. This city does not wait for you to read it twice.' },
+
+    { behavior: 'split', type: 'title', left: 'HUMAN', right: 'MACHINE' },
+    { behavior: 'split', type: 'small', left: 'Where one ends', right: 'the other begins is hard to say anymore.' },
+
+    { behavior: 'typewriter', type: 'body', text: 'RADIO: "...still reading you. Stay on the corridor. Do not stop for—"' },
+
+    { behavior: 'fade', type: 'title', text: 'THE GRID', chapter: true },
+    {
+      behavior: 'scroll',
+      sections: [
+        { type: 'body', text: 'A truck cuts across three lanes without signaling.', effects: ['jolt'] },
+        { type: 'body', text: 'You correct hard, tires screaming against wet asphalt.' },
+        { type: 'body', text: 'A billboard overhead stutters, dies, relights.', effects: ['flash'] },
+        { type: 'body', text: 'For a second the whole grid seems to glitch at once.', effects: ['desaturate'] },
+        { type: 'body', text: 'Then — quiet. Just the hum of tires and rain.', effects: ['slowmo'] },
+        { type: 'small', text: 'The city exhales. So do you.' },
+      ],
+    },
+
+    { behavior: 'fade', type: 'quote', text: 'A city like this one never actually sleeps — it just dims, waiting for someone to drive through it.' },
+
+    {
+      behavior: 'fade',
+      type: 'small',
+      image: 'https://picsum.photos/id/1071/1200/700',
+      imageAlt: 'A rain-slicked city street at night, lit by colored signage',
+      imageCaption: 'Every window here has its own color. None of them are asleep.',
+    },
+
+    { behavior: 'fade', type: 'title', text: 'DESTINATION UNKNOWN', chapter: true },
+    { behavior: 'fade', type: 'title', text: 'KEEP DRIVING' },
+  ],
+};
+
+Scrollytelling.init(CONFIG);
+</script>
+</body>
+</html>
