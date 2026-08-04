@@ -1,8 +1,7 @@
 # Scrollytelling Engine
 
 A scroll-driven "camera flythrough" story engine: as the page scrolls, a
-virtual camera flies past text panels placed at different depths. No build
-step, no dependencies.
+virtual camera flies past text panels placed at different depths.
 
 **Files:**
 
@@ -163,7 +162,3 @@ The camera motion uses `animation-timeline: scroll()` (current
 Chromium-based browsers). Elsewhere, panels fall back to stacked and fully
 visible — no content lost, just no camera effect. Effects use the Web
 Animations API, which has much broader support.
-
-## License
-
-None specified — add one appropriate to how you're using this.
