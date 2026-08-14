@@ -181,26 +181,20 @@
     .camera { animation: fly-through linear both; animation-timeline: scroll(root block); }
   }
   @keyframes fly-through {
-    /* The camera's Z position follows an ease-in-out-cubic curve baked
-       directly into these keyframe stops (NOT via animation-timing-function
-       — that has to stay 'linear' since scroll(root block) maps scroll
-       position straight onto keyframe progress). Each stop below is
-       total-depth * easeInOutCubic(t) for t = 0, 0.1, 0.2 ... 1.0. The
-       result: very little Z change near the start/end of the scroll (slow,
-       lingering) and a big jump through the middle (fast, dramatic) — a
-       stronger, more deliberate dolly than a flat linear ramp. Panel depths
-       are matched to this same curve in JS (see invEaseInOutCubic) so
-       panels still come into focus at the right scroll position. */
+    /* The camera's Z position follows a linear curve through the depth
+       budget. Each stop is total-depth * t for t = 0, 0.1, 0.2 ... 1.0.
+       The result: consistent movement through the scene at a constant speed.
+       Panel depths are matched to this same linear progression in JS. */
     0%   { transform: translate3d(0, 0, calc(var(--total-depth) * 0)); }
-    10%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.004)); }
-    20%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.032)); }
-    30%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.108)); }
-    40%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.256)); }
+    10%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.1)); }
+    20%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.2)); }
+    30%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.3)); }
+    40%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.4)); }
     50%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.5)); }
-    60%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.744)); }
-    70%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.892)); }
-    80%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.968)); }
-    90%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.996)); }
+    60%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.6)); }
+    70%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.7)); }
+    80%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.8)); }
+    90%  { transform: translate3d(0, 0, calc(var(--total-depth) * 0.9)); }
     100% { transform: translate3d(0, 0, var(--total-depth)); }
   }
 
@@ -1101,18 +1095,14 @@ function setRange(el, win) {
       const totalDepth = Math.abs(Math.min(...depths)) + CONFIG.scene.depthPerPanel;
       root.style.setProperty('--total-depth', totalDepth + 'px');
 
-      // The camera's Z is eased (see @keyframes fly-through), not linear in
-      // scroll %. easeInOutCubic(t) gives Z-fraction from scroll-fraction t;
-      // invEaseInOutCubic(f) does the reverse — given how far along the depth
-      // budget a point sits (f = -z/totalDepth), find the scroll % at which
-      // the camera actually reaches it, so panel timing matches camera timing.
-      function invEaseInOutCubic(f) {
-        f = Math.min(1, Math.max(0, f));
-        return f < 0.5
-          ? Math.cbrt(f / 4)
-          : 1 - Math.cbrt(2 * (1 - f)) / 2;
+      // The camera's Z position is linear in scroll %. Given how far along
+      // the depth budget a point sits (f = -z/totalDepth), find the scroll %
+      // at which the camera actually reaches it, so panel timing matches
+      // camera timing.
+      function depthToScrollPercent(f) {
+        return Math.min(1, Math.max(0, f));
       }
-      const depthToPct = z => invEaseInOutCubic(-z / totalDepth) * 100;
+      const depthToPct = z => depthToScrollPercent(-z / totalDepth) * 100;
 
       // Each panel's own reserved slot, converted to scroll %, plus its center
       // — the center (not the far edge) is what the panel's 3D --z position and
